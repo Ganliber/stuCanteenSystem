@@ -1,0 +1,47 @@
+<RCC>
+    <qresource prefix="/">
+        <file>image/batch_process.png</file>
+        <file>image/batch_process_clicked.png</file>
+        <file>image/canteen.png</file>
+        <file>image/canteen_clicked.png</file>
+        <file>image/card.png</file>
+        <file>image/card_clicked.png</file>
+        <file>image/data_minning.png</file>
+        <file>image/data_minning_clicked.png</file>
+        <file>image/manager.png</file>
+        <file>image/manager_clicked.png</file>
+        <file>image/student.png</file>
+        <file>image/student_clicked.png</file>
+        <file>image/summary.png</file>
+        <file>image/summary_clicked.png</file>
+        <file>image/title.jpg</file>
+        <file>image/topbtn_help.png</file>
+        <file>image/topbtn_info.png</file>
+        <file>image/topbtn_setting.png</file>
+        <file>image/windowTitle.png</file>
+        <file>image/usr_portrait_default.jpeg</file>
+        <file>image/btn_setTime.png</file>
+    </qresource>
+    <qresource prefix="/card_page">
+        <file>image/card_page/btn_account_delete.png</file>
+        <file>image/card_page/btn_batch_distribute.png</file>
+        <file>image/card_page/btn_batch_process.png</file>
+        <file>image/card_page/btn_discharge.png</file>
+        <file>image/card_page/btn_distribute.png</file>
+        <file>image/card_page/btn_open.png</file>
+        <file>image/card_page/btn_reissue.png</file>
+        <file>image/card_page/btn_reportLoss.png</file>
+        <file>image/card_page/btn_uncouple.png</file>
+        <file>image/card_page/down.png</file>
+        <file>image/card_page/up.png</file>
+        <file>image/card_page/search_hover.png</file>
+        <file>image/card_page/search_normal.png</file>
+    </qresource>
+    <qresource prefix="/canteen_page">
+        <file>image/canteen_page/canteen_portrait.jpeg</file>
+        <file>image/canteen_page/batch_consume.png</file>
+        <file>image/canteen_page/consume.png</file>
+        <file>image/canteen_page/uploadWindows_clicked.png</file>
+        <file>image/canteen_page/food.png</file>
+    </qresource>
+</RCC>
