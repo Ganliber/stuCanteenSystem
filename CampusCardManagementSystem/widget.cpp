@@ -9,6 +9,7 @@
 #include <QSize>
 #include <QDateTime>
 #include <QPainter>
+#include <algorithm>
 
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
@@ -18,6 +19,8 @@ Widget::Widget(QWidget *parent) :
     /***************************************************
      *  function:Configure the current time            *
      ***************************************************/
+    //批量操作顺序号
+    this->sequenceNumber=0;
 
     //实时更新时间
     this->timer = new QTimer();
@@ -46,7 +49,6 @@ Widget::Widget(QWidget *parent) :
         //食堂信息·Model和选择模型
         theModelCanteen = new QStandardItemModel(0,2,this);
         theSelectionCanteen = new QItemSelectionModel(theModelCanteen);
-
 
     //操作日志模型
 
@@ -159,19 +161,14 @@ Widget::Widget(QWidget *parent) :
     //设置page_canteen
     setPageCanteenContent();
 
+    //设置page_batch
+    setPageBatchContent();
+
     //设置搜索框
     setSearchBox();
 
     //设置groupbox无边框
-
-        //card_page
-        ui->gbx_info->setStyleSheet("QGroupBox{border:none}");
-        ui->gbx_list->setStyleSheet("QGroupBox{border:none}");
-
-        //canteen_page
-        ui->gbx_canteen_info->setStyleSheet("QGroupBox{border:none}");
-        ui->gbx_canteen_list->setStyleSheet("QGroupBox{border:none}");
-
+    setGroupBoxNoBorder();
 }
 
 //析构函数
@@ -226,9 +223,11 @@ void Widget::iniModelFromCanteenManagement()
 {
     int rowCount = this->canteenManage->windowNumber;//窗口数量
     theModelCanteen->setRowCount(rowCount);//设置行数
+
     QStringList header;
     header<<"窗口号"<<"记录位置号";
     theModelCanteen->setHorizontalHeaderLabels(header);//设置表头文字
+
     QStringList templist;
     for(int i=0;i<rowCount;i++)
     {
@@ -251,27 +250,213 @@ void Widget::iniModelFromCanteenManagement()
 }
 
 //Single Canteen Window Log
-void iniModelFromSingleCanteenWindowLog()
+void Widget::iniModelFromSingleCanteenWindowLog()
 {
+    //准备表格头
+    QStringList header;
+    header<<"消费卡号"<<"余额变化"<<"当前余额"<<"消费结果";
+    theModelWindow->setHorizontalHeaderLabels(header);
 
+    //准备临时数据
+    QStringList tempList;
+
+    //获取当前索引
+    int id = ui->tbv_win_list->currentIndex().row();
+
+    //累计交易次数
+    int sumTimes = 0;
+
+    //累计交易金额
+    qreal sumAmount = 0.0;
+
+    //获取当前日期
+    QDateTime curDt = *this->globalDateTime;
+
+    //更新当前日期下的消费记录
+    std::sort(this->canteenManage->CanteenWindowList[id].tempLog.begin(),
+              this->canteenManage->CanteenWindowList[id].tempLog.end());
+
+    //测试代码
+    //qDebug()<<"id="<<id;
+    //qDebug()<<"logs size="<<this->canteenManage->CanteenWindowList[id].tempLog.size();
+
+    //遍历到当天的日志
+    for(int i=0;i<this->canteenManage->CanteenWindowList[id].tempLog.size();i++)
+    {
+        auto it = &canteenManage->CanteenWindowList[id].tempLog[i];
+
+        qDebug()<<it->opTime.date();
+
+        if(it->opTime.date()<curDt.date())
+            continue;
+        else if(it->opTime.date()>curDt.date())
+            break;
+        else
+        {
+            qreal bc = it->balanceChange;
+            qreal bb = it->balanceBefore;
+            QString cN = it->canteenNumber;//消费卡号
+
+            if(it->opResult==true)//消费成功
+                tempList<<cN<<QString("%1").arg(bc)<<QString("%1").arg(bb+bc);
+            else//消费失败
+                tempList<<cN<<QString("%1").arg(bc)+"!"<<QString("%1").arg(bb);
+
+            if(it->opResult==true)
+                tempList<<"成功";
+            else
+                tempList<<"失败";
+
+            for(int j=0;j<4;j++)
+            {
+                //定义
+                QStandardItem *aItem = new QStandardItem(tempList.at(j));
+
+                //设置项
+                theModelWindow->setItem(sumTimes,j,aItem);
+
+            }
+            tempList.clear();//清空
+            sumTimes += 1;//当日累计消费次数
+            sumAmount += (-1)*bc;
+        }
+    }
+
+    //更新当前总消费次数和总收金额
+    ui->lbl_total_money->setText(QString("%1").arg(sumAmount));
+    ui->lbl_total_times_transactions->setText(QString("%1").arg(sumTimes));
 }
 
 //Total Student Card Log
-void iniModelFromTotalCardLog()
+void Widget::iniModelFromTotalCardLog()
 {
+    //准备表格头
+    QStringList header;
+    header<<"时间"<<"操作名"<<"姓名"<<"学号"<<"涉及卡号"<<"结果"<<"当前余额";//("形式：369.3(+20.0)")--->7列";
+    theModelLogCard->setHorizontalHeaderLabels(header);
 
+    //准备临时数据
+    QStringList tempList;
+
+    //排序
+    std::sort(this->cardManage->Log.begin(),this->cardManage->Log.end());
+
+    for(int i=0;i<this->cardManage->Log.size();i++)
+    {
+        auto it = &this->cardManage->Log[i];//得到响应指针
+
+        //时间
+        tempList<<it->opTime.toString("yyyy-M-d hh:mm");
+
+        switch (it->nameLocation) {
+        case 0:
+            tempList<<"开户"<<it->stuName<<it->stuNumber<<"-"<<""<<"-";
+            break;
+        case 1:
+            tempList<<"销户"<<it->stuName<<it->stuNumber<<"-"<<""<<"-";
+            break;
+        case 2:
+            tempList<<"发卡"<<it->stuName<<it->stuNumber<<it->canteenNumber<<""<<"-";
+            break;
+        case 3:
+            tempList<<"挂失"<<it->stuName<<it->stuNumber<<it->canteenNumber<<""<<"-";
+            break;
+        case 4:
+            tempList<<"解挂"<<it->stuName<<it->stuNumber<<it->canteenNumber<<""<<"-";
+            break;
+        case 5:
+            tempList<<"补卡"<<it->stuName<<it->stuNumber<<it->canteenNumber+"(新)"<<""<<"-";
+            break;
+        case 6:
+            tempList<<"充值"<<it->stuName<<it->stuNumber<<it->canteenNumber<<""
+               <<QString::number(it->balanceBefore+it->balanceChange,'f',2)
+                 +"(+"+QString::number(it->balanceChange)+")";//保留两位小数
+            break;
+        }
+        //操作结果
+        if(it->opResult==true)
+            tempList[5]="成功";
+        else
+            tempList[5]="失败";
+
+        //显示
+        for(int j=0;j<7;j++)
+        {
+            //定义
+            QStandardItem *aItem = new QStandardItem(tempList.at(j));
+
+            //设置项
+            theModelLogCard->setItem(i,j,aItem);
+        }
+
+        //字符串清空
+        tempList.clear();
+    }
 }
 
 //Total Recharge And Consumption Log
-void iniModelFromTotalConsumeAndRechargeLog()
+void Widget::iniModelFromTotalConsumeLog()
 {
 
 }
 
 //Total Batch Log
-void iniModelFromTotalBatchLog()
+void Widget::iniModelFromTotalBatchLog()
 {
+    //准备表格头
+    QStringList header;
+    header<<"操作类型"<<"数据项数"<<"成功项数"<<"异常项数";
+    theModelLogBatch->setHorizontalHeaderLabels(header);
 
+    //准备临时数据
+    QStringList tempList;
+
+    //遍历
+    for(int i=0;i<this->globalBatchLog.size();i++)
+    {
+        //得到相应指针
+        auto it = &this->globalBatchLog[i];
+
+        //总项数
+        QString opt = QString::number(it->opTotalNumber);
+
+        //异常项数
+        QString ope = QString::number(it->opExceptionNumber);
+
+        //成功项数
+        QString ops = QString::number(it->opTotalNumber-it->opExceptionNumber);
+
+        //选择
+        switch (it->nameLocation) {
+        case 0://开户
+            tempList<<"开户"<<opt<<opt<<ope;
+            break;
+        case 2://发卡
+            tempList<<"发卡"<<opt<<opt<<ope;
+            break;
+        case 7://消费
+            tempList<<"消费"<<opt<<opt<<ope;
+            break;
+        case 6://集体充值
+            tempList<<"充值"<<opt<<opt<<ope;
+            break;
+        default:
+            tempList<<"卡片操作"<<opt<<opt<<ope;
+            break;
+        }
+
+        for(int j=0;j<4;j++)
+        {
+            //定义
+            QStandardItem *aItem = new QStandardItem(tempList.at(j));
+
+            //设置项
+            theModelLogBatch->setItem(i,j,aItem);
+        }
+
+        //清空
+        tempList.clear();
+    }
 }
 
 /**************************************************************/
@@ -641,6 +826,24 @@ void Widget::setRightPushButtonStyle()
                                  }");
 }
 
+//设置groupbox无边框
+void Widget::setGroupBoxNoBorder()
+{
+    //设置groupbox无边框
+
+        //card_page
+        ui->gbx_info->setStyleSheet("QGroupBox{border:none}");
+        ui->gbx_list->setStyleSheet("QGroupBox{border:none}");
+
+        //canteen_page
+        ui->gbx_canteen_info->setStyleSheet("QGroupBox{border:none}");
+        ui->gbx_canteen_list->setStyleSheet("QGroupBox{border:none}");
+
+        //batch_page
+        ui->gbx_batch->setStyleSheet("QGroupBox{border:none}");
+
+}
+
 /***************************************************************/
 
 
@@ -650,13 +853,6 @@ void Widget::setRightPushButtonStyle()
 //设置page_card控件
 void Widget::setPageCardContent()
 {
-    //设置左侧gbx_list
-
-
-    //设置右侧gbx_info
-
-    //设置用户默认头像
-
     //按比例缩放：
     QPixmap portrait = QPixmap(":/image/usr_portrait_default.jpeg");
     QPixmap temp = portrait.scaled(300,340.5,Qt::KeepAspectRatio);
@@ -760,6 +956,10 @@ void Widget::on_tbtn_batch_open_clicked()
 //批量开户读取文件操作模块
 bool Widget::openFileStudentAccount(QString fileName)
 {
+    //为批量操作准备
+    int total=0;//总数据个数
+    int exceptNum=0;//成功项数
+
     //QFile和QTextStream结合
     QFile aFile(fileName);
     if(!aFile.exists())
@@ -784,10 +984,36 @@ bool Widget::openFileStudentAccount(QString fileName)
         qDebug()<<stuName<<" "<<stuNumber;*/
 
         //初始化
-        this->cardManage->addNewAccount(stuNumber,stuName,QDate(2024,7,15));//添加新用户
+        bool res=this->cardManage->addNewAccount(stuNumber,stuName,QDate(2024,7,15));//添加新用户
+
+        //异常项数统计
+        if(!res)
+            exceptNum += 1;
+
+        //总项数统计
+        total += 1;
+
+        //生成单个日志
+        OperationLog *l = new OperationLog(1,0,res,QDateTime(QDate(2021,9,1),QTime(8,30)),
+                                           stuName,stuNumber,NULL,NULL,0.0,0.0,0,0);
+        //加入其中
+        this->cardManage->Log.append(*l);
     }
+
+    //生成批量操作的日志
+    OperationLog *bl = new OperationLog(3,0,true,QDateTime(QDate(2021,9,1),QTime(8,30)),
+                                        NULL,NULL,NULL,NULL,0,0,total,exceptNum);
+    //加入其中
+    this->globalBatchLog.append(*bl);
+
     aFile.close();//关闭文件
-    iniModelFromCardManagement();//更新显示
+
+    iniModelFromCardManagement();//更新显示学生列表
+
+    iniModelFromTotalCardLog();//更新显示卡片操作日志
+
+    iniModelFromTotalBatchLog();//更新显示批量操作日志
+
     return true;
 }
 
@@ -877,11 +1103,29 @@ void Widget::on_btn_loss_clicked()
         {
             //挂失校园卡
             this->cardManage->campusCardList[index].cardReportLoss();//挂失
+
+            //修改标签
             ui->lbl_card_state->setText("禁用");
+
             //更新列表
             iniModelFromCardManagement();
+
             //更新信息表
             this->updateInfoOnGroupboxInfo(index);
+
+            QString stuName = this->cardManage->campusCardList[index].studentName;
+            QString studentNumber = this->cardManage->campusCardList[index].studentNumber;
+            QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+            //生成日志
+            OperationLog *sl = new OperationLog(1,3,true,*this->globalDateTime,stuName,studentNumber,
+                                                cNumber,NULL,0,0,0,0);
+
+            //加入
+            this->cardManage->Log.append(*sl);
+
+            //显示
+            iniModelFromTotalCardLog();
         }
     }
     else
@@ -934,6 +1178,21 @@ void Widget::on_btn_uncouple_clicked()
 
                 //更新信息表
                 this->updateInfoOnGroupboxInfo(index);
+
+                //日志
+                QString stuName = this->cardManage->campusCardList[index].studentName;
+                QString studentNumber = this->cardManage->campusCardList[index].studentNumber;
+                QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                //生成日志
+                OperationLog *sl = new OperationLog(1,4,true,*this->globalDateTime,stuName,studentNumber,
+                                                    cNumber,NULL,0.0,0.0,0,0);
+
+                //加入
+                this->cardManage->Log.append(*sl);
+
+                //显示
+                iniModelFromTotalCardLog();
             }
         }
         else if(isDistributed==false&&cardState==false)
@@ -976,7 +1235,6 @@ void Widget::on_btn_reissue_clicked()
         {
             QString dlgTitle = "校园卡补卡";
             QString strInfo = "是否补办校园卡?";
-            QMessageBox::StandardButton defaultButton = QMessageBox::No;
             QMessageBox::StandardButton result;//返回选择的按钮
             result = QMessageBox::question(this,dlgTitle,strInfo,
                                            QMessageBox::Yes|QMessageBox::No);
@@ -991,6 +1249,23 @@ void Widget::on_btn_reissue_clicked()
 
                 //更新信息表
                 this->updateInfoOnGroupboxInfo(index);
+
+                //更新日志
+                //日志
+                QString stuName = this->cardManage->campusCardList[index].studentName;
+                QString studentNumber = this->cardManage->campusCardList[index].studentNumber;
+                QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                //生成日志
+                OperationLog *sl = new OperationLog(1,5,true,*this->globalDateTime,stuName,studentNumber,
+                                                    cNumber,NULL,0.0,0.0,0,0);
+
+                //加入
+                this->cardManage->Log.append(*sl);
+
+                //显示
+                iniModelFromTotalCardLog();
+
             }
         }
         else if(isDistributed==false&&cardState==false)
@@ -1109,10 +1384,24 @@ void Widget::getRechargeBalance(qreal tempBalance)
     int index = this->cardManage->mapStuNumberToCardNumber[ui->acount_number->text()];
 
     //更新余额
+    qreal bB = this->cardManage->campusCardList[index].balance;
+    qreal bC = tempBalance - bB;
     this->cardManage->campusCardList[index].balance = tempBalance;
 
     //更新groupbox_info
     updateInfoOnGroupboxInfo(index);
+
+    //生成日志
+    QString stuName = this->cardManage->campusCardList[index].studentName;
+    QString studentNumber = this->cardManage->campusCardList[index].studentNumber;
+    QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+    OperationLog *sl = new OperationLog(1,6,true,*this->globalDateTime,stuName,studentNumber,
+                              cNumber,NULL,bB,bC,0,0);
+    //添加
+    this->cardManage->Log.append(*sl);
+
+    //显示
+    iniModelFromTotalCardLog();
 }
 
 /****************************************************************/
@@ -1253,6 +1542,9 @@ void Widget::on_canteenCurrentChanged(const QModelIndex &current, const QModelIn
         ui->lbl_win_location->setText(winLocation);//设置窗口位置号
 
         ui->lbl_win_curDateTime->setText(this->globalDateTime->toString("yyyy年M月d日"));
+
+        //更新显示
+        iniModelFromSingleCanteenWindowLog();
     }
 }
 
@@ -1268,7 +1560,7 @@ void Widget::on_btn_consumption_clicked()
 
 //    dlg_datetime->exec();
 
-    dlg_consume = new DialogConsumption(this);//初始化对话框
+    dlg_consume = new DialogConsumption(*this->globalDateTime,this);//初始化对话框
 
     dlg_consume->setAttribute(Qt::WA_DeleteOnClose);//对话框关闭时自动删除
 
@@ -1285,13 +1577,64 @@ void Widget::on_btn_consumption_clicked()
 }
 
 //传参设置消费槽函数
-void Widget::myConsumption(bool closeResult=false,QString cardNumber=NULL,
-                   QTime t=QTime::currentTime(),qreal amount=0,
-                   bool res=false)
+void Widget::myConsumption(bool closeResult,QString cardNumber,
+                   QDateTime dt,qreal amount,bool res)
 {
     if(!closeResult)
         return;//消费无效
 
+    //账户索引
+    int index = this->cardManage->mapCanteenNumberToCardNumber[cardNumber].first;
+
+    //余额变化量
+    qreal balChange = (-1)*amount;
+
+    if(res)
+    {
+        //原来余额
+        qreal balBefore = this->cardManage->campusCardList[index].balance;
+
+        //余额减少
+        this->cardManage->campusCardList[index].balance -= amount;
+
+        //记录日志
+
+            //消费时间
+            QDate tempd = this->globalDateTime->date();
+
+            //添加日志
+            OperationLog *conLog = new OperationLog(2,7,true,QDateTime(tempd,dt.time()),
+                                NULL,NULL,cardNumber,ui->lbl_win_number->text(),balBefore,balChange,0,0);
+
+            //添加到当前食堂窗口列表中
+            this->canteenManage->CanteenWindowList[index].addConsumptionLog(conLog);
+
+            //更新显示
+            iniModelFromSingleCanteenWindowLog();
+    }
+    else
+    {
+        //余额不足
+
+            //原来余额
+            qreal balBefore = this->cardManage->campusCardList[index].balance;
+
+            //得到当前窗口位置
+            ui->tbv_win_list->currentIndex().row();
+
+            //消费时间
+            QDate tempd = this->globalDateTime->date();
+
+            //添加日志
+            OperationLog *conLog = new OperationLog(2,7,false,QDateTime(tempd,dt.time()),
+                    NULL,NULL,cardNumber,ui->lbl_win_number->text(),balBefore,balChange,0,0);
+
+            //添加到当前食堂窗口列表中
+            this->canteenManage->CanteenWindowList[index].addConsumptionLog(conLog);
+
+            //更新显示
+            iniModelFromSingleCanteenWindowLog();
+    }
 }
 
 //传参设置查询余额槽函数
@@ -1342,6 +1685,579 @@ void Widget::myQueryBalance(QString cardNumber)
 /****************************Log_Page*****************************/
 
 
+
+/*****************************************************************/
+
+
+
+/****************************Batch_Page*****************************/
+
+//设置page_batch
+void Widget::setPageBatchContent()
+{
+    //设置甘特图：
+    QPixmap portrait = QPixmap(":/batch_page/image/batch_page/gantt.png");
+    //QPixmap temp = portrait.scaled(1800,748.24,Qt::KeepAspectRatio);
+    ui->lbl_gantt->setPixmap(portrait);//设置图片
+
+    //设置按钮样式
+
+        //卡片+充值1
+        ui->btn_card_rec1->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("09-06 23:59:59"),QSize(340,100));
+        ui->btn_card_rec1->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //消费1
+        ui->btn_con1->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("10-13 23:59:59"),QSize(340,100));
+        ui->btn_con1->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //消费2
+        ui->btn_con2->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("11-03 23:59:59"),QSize(340,100));
+        ui->btn_con2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //消费3
+        ui->btn_con3->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("11-24 23:59:59"),QSize(340,100));
+        ui->btn_con3->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //消费4
+        ui->btn_con4->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("12-15 23:59:59"),QSize(340,100));
+        ui->btn_con4->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //消费5
+        ui->btn_con5->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("12-31 23:59:59"),QSize(340,100));
+        ui->btn_con5->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //充值2
+        ui->btn_rec2->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("10-14 7:00:00"),QSize(340,100));
+        ui->btn_rec2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //充值3
+        ui->btn_rec3->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("11-04 7:00:00"),QSize(340,100));
+        ui->btn_rec3->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //充值4
+        ui->btn_rec4->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("11-25 7:00:00"),QSize(340,100));
+        ui->btn_rec4->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        //充值5
+        ui->btn_rec5->Initialization(QString(":/canteen_page/image/canteen_page/batch_consume.png"),QString(":/canteen_page/image/canteen_page/batch_consume.png"),
+                                         QSize(60,60),QString("12-16 7:00:00"),QSize(340,100));
+        ui->btn_rec5->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    //设置groupBox无边框
+
+}
+
+//批量操作1:卡片操作和充值1
+void Widget::on_btn_card_rec1_clicked()
+{
+    //判断是否之前的已经执行完
+    if(sequenceNumber<0)
+    {
+        QString dlgTitle = "提示";
+        QString strInfo = "请先触发之前的操作!";
+        QMessageBox::warning(this,dlgTitle,strInfo,
+                                      QMessageBox::Ok);
+        return;
+    }
+    else if(sequenceNumber>0)
+    {
+        QString dlgTitle = "提示";
+        QString strInfo = "请已经触发该操作,不能重复触发!";
+        QMessageBox::warning(this,dlgTitle,strInfo,
+                                      QMessageBox::Ok);
+        return;
+    }
+
+    QString dlgTitle = "校园卡解挂";
+
+    QString strInfo = "是否执行截至9.6日的卡片操作和第一次充值操作?";
+
+    QMessageBox::StandardButton result;//返回选择的按钮
+
+    result = QMessageBox::question(this,dlgTitle,strInfo,
+                                   QMessageBox::Yes|QMessageBox::No);
+
+    if(result==QMessageBox::Yes)
+    {
+        //时间点
+        QDateTime *begin = new QDateTime(QDate(2021,9,1),QTime(0,0));
+        QDateTime *end = new QDateTime(QDate(2021,9,7),QTime(0,0,0));
+
+        //第一次操作
+        this->openFileCard(*begin,*end);
+
+        //顺序号增加
+        sequenceNumber += 1;
+    }
+}
+
+
+
+//批量处理
+
+    //批量处理卡片数据
+    bool Widget::openFileCard(QDateTime begin,QDateTime end)
+    {
+        //为批量操作准备
+        int total=0;//总数据个数
+        int exceptNum=0;//成功项数
+
+        //读取文件
+        QString fileName =
+            "D:\\qt_development_repo\\repo\\campus_card_management_system\\CampusCardManagementSystem\\TestData\\cz002.txt";
+
+        //QFile和QTextStream结合
+        QFile aFile(fileName);
+
+        if(!aFile.exists())
+            return false;//文件不存在
+
+        if(!aFile.open(QIODevice::ReadOnly|QIODevice::Text))
+            return false;//文件打开失败
+
+        QTextStream aStream(&aFile);//用文本流读取文件
+
+        aStream.setAutoDetectUnicode(true);//自动检测 Unicode,兼容中文字符
+
+        QString info = aStream.readLine();//读取一行文本
+
+        qDebug()<<info;//测试代码
+
+        if(info!="CZ")
+            return false;//不是批量卡片操作文件，退回
+
+        while(!aStream.atEnd())
+        {
+            info = aStream.readLine();//读取一行
+
+            //文件分割
+            info = info.section(';',0,0);//丢去最后的分号
+
+            //以逗号分割
+
+                //日期时间字符串
+                QString datetime = info.section(',',0,0);//2021 0903 08 31 53 16
+
+                //日期时间
+                QDateTime dt = QDateTime::fromString(datetime,"yyyyMMddhhmmssz");
+
+                //测试代码
+                qDebug()<<dt;
+
+                //判断日期时间是否超出范围
+                if(dt<begin)
+                    continue;
+                if(dt>end)
+                    break;
+
+                //操作名
+                QString opName = info.section(',',1,1);
+
+                //学号
+                QString studentNumber = info.section(',',2,2);
+
+            //操作结果
+            bool res=false;
+
+            //得到相关学号对应学生:存在->对应位置;不存在->-1
+            int index = cardManage->queryCampusCard(studentNumber);
+
+            if(index==-1)
+            {
+                res=false;
+            }
+            else
+            {
+                //学生姓名
+                QString stuName = this->cardManage->campusCardList[index].studentName;
+
+                //充值时继续读取
+                if(opName=="充值")
+                {
+                    //还有充值金额
+                    qreal bC = info.section(',',3,3).toDouble();//转换为qreal类型
+
+                    //获取当前账户状态
+                    bool accountState = this->cardManage->campusCardList[index].accountState;
+                    bool isDistributed = this->cardManage->campusCardList[index].isDistributed;
+                    bool cardState = this->cardManage->campusCardList[index].cardState;
+
+
+                    //判断
+                    if(accountState&&isDistributed&&cardState)
+                    {
+                        //获取之前余额
+                        qreal bB = this->cardManage->campusCardList[index].balance;
+
+                        //此时可以充值
+                        res = this->cardManage->campusCardList[index].cardRecharge(bC);
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //操作日志
+                        OperationLog *sl;
+
+                        if(res==false)
+                        {
+                            //生成单个日志:余额超限
+                            qDebug()<<"充值失败"<<bB<<" "<<"(+"<<bC<<")";
+                            sl = new OperationLog(1,6,false,dt,stuName,studentNumber,
+                                                      cNumber,NULL,bB,0.0,0,0);
+                        }
+                        else
+                        {
+                            sl = new OperationLog(1,6,true,dt,stuName,studentNumber,
+                                                      cNumber,NULL,bB,bC,0,0);
+                        }
+
+                        //添加日志
+                        this->cardManage->Log.append(*sl);
+                    }
+                    else
+                        res=false;
+                }
+                else if(opName=="挂失")
+                {
+                    //获取当前账户状态
+                    bool cardState = this->cardManage->campusCardList[index].cardState;
+                    bool accountState = this->cardManage->campusCardList[index].accountState;
+
+                    if(cardState&&accountState)
+                    {
+                        //可以进行挂失
+                        this->cardManage->campusCardList[index].cardReportLoss();//挂失
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,3,true,dt,stuName,studentNumber,
+                                                            cNumber,NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+
+                        //状态
+                        res=true;
+                    }
+                    else
+                    {
+                        //挂失失败
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,3,false,dt,stuName,studentNumber,
+                                                            "-",NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+
+                        //状态
+                        res=false;
+                    }
+                }
+                else if(opName=="解挂")
+                {
+                    //获取当前账户状态
+                    bool accountState = this->cardManage->campusCardList[index].accountState;
+                    bool isDistributed = this->cardManage->campusCardList[index].isDistributed;
+                    bool cardState = this->cardManage->campusCardList[index].cardState;
+
+                    if(accountState==true&&isDistributed==true&&cardState==false)
+                    {
+                        //更新状态
+                        res=true;
+
+                        //解挂校园卡
+                        this->cardManage->campusCardList[index].cardUncouple();
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,4,true,dt,stuName,studentNumber,
+                                                            cNumber,NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+
+                    }
+                    else
+                    {
+                        //更新状态
+                        res=false;
+
+                        //解挂校园卡
+                        this->cardManage->campusCardList[index].cardUncouple();
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,4,false,dt,stuName,studentNumber,
+                                                            cNumber,NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+
+                    }
+                }
+                else if(opName=="销户")
+                {
+                    res = this->cardManage->campusCardList[index].accountDelete();
+
+                    //生成日志
+                    OperationLog *sl = new OperationLog(1,1,res,dt,stuName,studentNumber,
+                                                        NULL,NULL,0.0,0.0,0,0);
+
+                    //加入
+                    this->cardManage->Log.append(*sl);
+                }
+                else if(opName=="补卡")
+                {
+                    //获取当前账户状态
+                    bool accountState = this->cardManage->campusCardList[index].accountState;
+                    bool isDistributed = this->cardManage->campusCardList[index].isDistributed;
+                    bool cardState = this->cardManage->campusCardList[index].cardState;
+
+                    if(accountState==true&&isDistributed==true&&cardState==false)
+                    {
+                        //补卡
+                        this->cardManage->reissueCard(studentNumber);
+
+                        //更新状态
+                        res=true;
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,5,true,dt,stuName,studentNumber,
+                                                            cNumber,NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+                    }
+                    else
+                    {
+                        //更新状态
+                        res=false;
+
+                        //卡号
+                        QString cNumber = this->cardManage->campusCardList[index].cardNumber.last();
+
+                        //生成日志
+                        OperationLog *sl = new OperationLog(1,5,false,dt,stuName,studentNumber,
+                                                            cNumber,NULL,0.0,0.0,0,0);
+
+                        //加入
+                        this->cardManage->Log.append(*sl);
+
+                    }
+                }
+            }
+
+            //异常项数统计
+            if(!res)
+                exceptNum += 1;
+
+            //总项数统计
+            total += 1;
+
+            //显示进度
+            qDebug()<<total<<"  "<<info;
+        }
+
+        //生成批量操作的日志
+        OperationLog *bl = new OperationLog(3,4,true,*this->globalDateTime,
+                                            NULL,NULL,NULL,NULL,0,0,total,exceptNum);
+        //加入其中
+        this->globalBatchLog.append(*bl);
+
+        aFile.close();//关闭文件
+
+        iniModelFromTotalCardLog();//更新显示卡片操作日志
+
+        iniModelFromTotalBatchLog();//更新显示批量操作日志
+
+        return true;
+    }
+
+    //批量处理消费数据
+    bool Widget::openFileConsumption(QDateTime begin,QDateTime end)
+    {
+        //为批量操作准备
+        int total=0;//总数据个数
+        int exceptNum=0;//成功项数
+
+        //读取文件
+        QString fileName =
+            "D:\\qt_development_repo\\repo\\campus_card_management_system\\CampusCardManagementSystem\\TestData\\xf014.txt";
+
+        //QFile和QTextStream结合
+        QFile aFile(fileName);
+
+        if(!aFile.exists())
+            return false;//文件不存在
+
+        if(!aFile.open(QIODevice::ReadOnly|QIODevice::Text))
+            return false;//文件打开失败
+
+        QTextStream aStream(&aFile);//用文本流读取文件
+
+        aStream.setAutoDetectUnicode(true);//自动检测 Unicode,兼容中文字符
+
+        QString info = aStream.readLine();//读取一行文本
+
+        qDebug()<<info;//测试代码
+
+        if(info!="XF")
+            return false;//不是批量卡片操作文件，退回
+
+        info = aStream.readLine();//读取一行
+
+        while(!aStream.atEnd())
+        {
+            if(info[0]=="W")
+            {
+                //测试代码:说明此时是某个窗口的开头
+                qDebug()<<info.mid(1);
+
+                //窗口序号
+                int winIndex = info.mid(1).toInt();
+
+                //窗口号字符串
+                QString wN;
+
+                //定义窗口号
+                if(winIndex<10)
+                    wN="0"+QString::number(winIndex);
+                else
+                    wN=QString::number(winIndex);
+
+                //读取开头
+                info = aStream.readLine();
+
+                //结果
+                bool res = false;
+
+                //直到再出现一个"W"切换窗口
+                while(info[0]!="W")
+                {
+                    //读取本次窗口的信息
+                    info = info.section(';',0,0);//取出尾部的分号
+
+                    //卡号
+                    QString cNumber = info.section(',',0,0);
+
+                    //日期
+                    QDate cDate=QDate::fromString(info.section(',',1,1),"yyyyMMdd");
+
+                    //时间
+                    QTime cTime=QTime::fromString(info.section(',',2,2),"hhmmssz");
+
+                    //汇总日期时间
+                    QDateTime *datetime = new QDateTime(cDate,cTime);
+
+                    //判断日期时间是否超出范围
+                    if(*datetime<begin||*datetime>end)
+                    {
+                        if(aStream.atEnd())
+                            break;
+                        else//未位于结尾处
+                            info = aStream.readLine();//再读一行
+                        continue;
+                    }
+
+                    //消费额度
+                    qreal money=info.section(',',3,3).toDouble();
+
+                    //翻转
+                    qreal balChange = (-1)*money;
+
+                    if(this->cardManage->mapCanteenNumberToCardNumber.contains(cNumber))
+                    {
+                        //获取索引
+                        int index = this->cardManage->mapCanteenNumberToCardNumber[cNumber].first;
+
+                        //指针
+                        auto it = &this->cardManage->campusCardList[index];
+
+                        //查询余额
+                        qreal balance = it->balance;
+
+                        //判断
+                        if(it->accountState&&it->isDistributed&&
+                                it->cardState&&it->cardNumber.last()==cNumber)
+                        {
+                            if(balance>=money)
+                            {
+                                //成功消费
+                                it->balance -= money;
+
+                                //记录日志
+                                OperationLog *log = new OperationLog(2,7,true,*datetime,
+                                      NULL,NULL,cNumber,wN,balance,balChange,0,0);
+
+                                //加入列表
+                                this->canteenManage->CanteenWindowList[winIndex-1].addConsumptionLog(log);
+
+                                //统计
+                                total += 1;
+                            }
+                            else
+                            {
+                                //余额不足
+
+                                //记录日志
+                                OperationLog *log = new OperationLog(2,7,false,*datetime,
+                                      NULL,NULL,cNumber,wN,balance,balChange,0,0);
+
+                                //加入列表
+                                this->canteenManage->CanteenWindowList[winIndex-1].addConsumptionLog(log);
+
+                                //记数
+                                exceptNum += 1;
+                                total += 1;
+                            }
+                        }
+                    }
+
+                    if(aStream.atEnd())
+                        break;
+                    else//未位于结尾处
+                        info = aStream.readLine();//再读一行
+                }
+            }
+        }
+
+        //生成批量操作的日志
+        OperationLog *bl = new OperationLog(3,7,true,*this->globalDateTime,
+                                            NULL,NULL,NULL,NULL,0,0,total,exceptNum);
+        //加入其中
+        this->globalBatchLog.append(*bl);
+
+        aFile.close();//关闭文件
+
+        iniModelFromTotalConsumeLog();//更新显示食堂操作日志
+
+        iniModelFromTotalBatchLog();//更新显示批量操作日志
+
+        return true;
+
+    }
 
 /*****************************************************************/
 

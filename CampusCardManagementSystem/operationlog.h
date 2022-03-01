@@ -8,11 +8,12 @@ class OperationLog
 {
 public:
     OperationLog();
-    OperationLog(int cIndex,int nLocation,QString sName,
-        QString sNumber,bool opRes,QDateTime opDateTime,QString cNumber,
-        qreal bB,qreal bC,int opT,int opE);
 
-private:
+    OperationLog(int cIndex, int nLocation, bool opRes, QDateTime opDateTime, QString sName,
+        QString sNumber, QString cNumber,QString wNumber,qreal bB, qreal bC, int opT, int opE);
+
+    bool operator <(const OperationLog &log);//重载运算符 <
+
 
     //标志变量
 
@@ -35,6 +36,8 @@ private:
     //半公共
 
         QString canteenNumber;//消费卡号
+
+        QString windowNumber;//消费窗口号
 
     //私类变量
 

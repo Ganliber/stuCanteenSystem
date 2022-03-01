@@ -44,4 +44,7 @@
         <file>image/canteen_page/uploadWindows_clicked.png</file>
         <file>image/canteen_page/food.png</file>
     </qresource>
+    <qresource prefix="/batch_page">
+        <file>image/batch_page/gantt.png</file>
+    </qresource>
 </RCC>

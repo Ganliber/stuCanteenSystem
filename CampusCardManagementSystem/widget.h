@@ -14,6 +14,7 @@
 #include "campuscardmanagement.h"
 #include "canteenwindow.h"
 #include "canteenmanagement.h"
+#include "operationlog.h"
 
 #include "dialogrecharge.h"
 #include "dialogconsumption.h"
@@ -43,6 +44,7 @@ public:
     //成员属性 2 (Key) : 数据管理对象
         CampusCardManagement *cardManage;//校园卡数据管理对象
         CanteenManagement *canteenManage;//食堂数据管理对象
+        QVector<OperationLog> globalBatchLog;//批量操作日志
 
     //成员属性 3 : 校园卡
         QStandardItemModel  *theModel;//校园卡数据模型
@@ -68,6 +70,10 @@ public:
         //批量操作日志
         QStandardItemModel *theModelLogBatch;
         QItemSelectionModel *theSelectionLogBatch;
+
+    //成员属性 7 : 批量操作标志
+        //防止先出发后面的时间点
+        int sequenceNumber;
 
     //TableView 样式
 
@@ -107,14 +113,28 @@ public:
     //设置page_canteen
     void setPageCanteenContent();
 
-    //响应批量开户
-    bool openFileStudentAccount(QString fileName);
+    //设置page_batch
+    void setPageBatchContent();
 
-    //响应批量导入食堂窗口
-    bool openFileCanteenWindow(QString fileName);
-
-    //设置搜框
+    //设置搜索框
     void setSearchBox();
+
+    //设置groupbox无边框
+    void setGroupBoxNoBorder();
+
+    //批量数据
+
+        //响应批量开户
+        bool openFileStudentAccount(QString fileName);
+
+        //响应批量导入食堂窗口
+        bool openFileCanteenWindow(QString fileName);
+
+        //批量处理卡片数据
+        bool openFileCard(QDateTime begin,QDateTime end);
+
+        //批量处理消费数据
+        bool openFileConsumption(QDateTime begin,QDateTime end);
 
 signals:
     //发送余额信息
@@ -129,7 +149,7 @@ public slots:
 
     //传参设置消费槽函数
     void myConsumption(bool closeResult,QString cardNumber,
-                       QTime t,qreal amount,bool res);
+                       QDateTime dt,qreal amount,bool res);
 
     //传参设置查询余额槽函数
     void myQueryBalance(QString cardNumber);
@@ -179,6 +199,8 @@ private slots:
     //设置消费按钮槽函数
     void on_btn_consumption_clicked();
 
+    void on_btn_card_rec1_clicked();
+
 private:
     //初始化 Model
 
@@ -199,7 +221,7 @@ private:
             void iniModelFromTotalCardLog();
 
             //Total Recharge And Consumption Log
-            void iniModelFromTotalConsumeAndRechargeLog();
+            void iniModelFromTotalConsumeLog();
 
             //Total Batch Log
             void iniModelFromTotalBatchLog();

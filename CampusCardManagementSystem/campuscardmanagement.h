@@ -25,6 +25,9 @@ public:
         //消费卡号到QVector的映射,QPair<int,bool>:first->QVector索引,second->是否为最新卡
         QMap<QString,QPair<int,bool>> mapCanteenNumberToCardNumber;
 
+        //操作日志
+        QVector<OperationLog> Log;
+
         //已经发卡的学生数量
         int stuIssuedNumber;
 

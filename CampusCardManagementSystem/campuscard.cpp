@@ -20,7 +20,7 @@ CampusCard::CampusCard(QString stuNumber,QString stuName,
     this->isDistributed=false;
 }
 
-//运算符重载:学号从大到小的顺序
+//运算符重载:学号从小到大的顺序
 bool CampusCard::operator <(const CampusCard &cc)
 {
     //本身就全局了(friend)不需要加作用域

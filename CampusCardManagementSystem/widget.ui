@@ -574,7 +574,7 @@ QWidget{
 }</string>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="page_card">
          <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,0,1">
@@ -1422,8 +1422,8 @@ QWidget{
          <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="2,0,1">
           <item>
            <widget class="QWidget" name="widget_2" native="true">
-            <layout class="QVBoxLayout" name="verticalLayout_2">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_9">
+             <item row="0" column="0" colspan="2">
               <widget class="QLabel" name="label_12">
                <property name="font">
                 <font>
@@ -1438,7 +1438,7 @@ QWidget{
                </property>
               </widget>
              </item>
-             <item>
+             <item row="1" column="0">
               <widget class="QLabel" name="label_9">
                <property name="font">
                 <font>
@@ -1453,10 +1453,10 @@ QWidget{
                </property>
               </widget>
              </item>
-             <item>
+             <item row="2" column="0" colspan="3">
               <widget class="QTableView" name="tbv_card_logs"/>
              </item>
-             <item>
+             <item row="3" column="0">
               <widget class="QLabel" name="label_7">
                <property name="font">
                 <font>
@@ -1469,8 +1469,41 @@ QWidget{
                </property>
               </widget>
              </item>
-             <item>
+             <item row="4" column="0" colspan="3">
               <widget class="QTableView" name="tbv_canteen_logs_total"/>
+             </item>
+             <item row="5" column="0">
+              <spacer name="horizontalSpacer_30">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>172</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="5" column="1">
+              <spacer name="horizontalSpacer_31">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>171</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="5" column="2">
+              <widget class="myToolButton" name="btn_generateLogs">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -1527,7 +1560,111 @@ QWidget{
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="page_batch"/>
+        <widget class="QWidget" name="page_batch">
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="3,1">
+          <item>
+           <widget class="QLabel" name="lbl_gantt">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="gbx_batch">
+            <property name="title">
+             <string/>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_8">
+             <item row="0" column="0" colspan="2">
+              <widget class="QLabel" name="lbl">
+               <property name="font">
+                <font>
+                 <family>微软雅黑</family>
+                 <pointsize>14</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>依次执行到截止日期</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="myToolButton" name="btn_card_rec1">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="myToolButton" name="btn_con1">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="myToolButton" name="btn_rec2">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="myToolButton" name="btn_con2">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="4">
+              <widget class="myToolButton" name="btn_rec3">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="myToolButton" name="btn_con3">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="myToolButton" name="btn_rec4">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="myToolButton" name="btn_con4">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3">
+              <widget class="myToolButton" name="btn_rec5">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="4">
+              <widget class="myToolButton" name="btn_con5">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="page_data"/>
        </widget>
       </item>
