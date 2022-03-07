@@ -46,7 +46,7 @@ void DialogConsumption::on_pushButton_clicked()
 }
 
 //接收余额槽函数
-void DialogConsumption::getAccount(qreal balance)
+void DialogConsumption::getAccount(double balance)
 {
     if(balance==-1)
     {
@@ -160,7 +160,7 @@ void DialogConsumption::on_pushButton_2_clicked()
     }
 
     //得到消费金额
-    qreal consumeMoney = ui->doubleSpinBox->value();
+    double consumeMoney = ui->doubleSpinBox->value();
 
     //判断是否超出余额
     if(consumeMoney>this->curBalance)

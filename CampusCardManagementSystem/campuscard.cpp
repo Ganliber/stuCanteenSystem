@@ -45,12 +45,14 @@ QString CampusCard::cardDistributed(int serialNumber)
 {
     //发卡:参数为流水号
     //计算卡号的校验码X
-    int temp = 0;
+    int temp = 3;
     int tempSerialNumber = serialNumber;//临时储存流水号
+
     for(int j=0;j<5;j++){
         temp += serialNumber%10;
         serialNumber /= 10;
     }
+
     int X = 9 - temp%10;//校验码
     serialNumber = tempSerialNumber*10+X;
 
@@ -59,7 +61,6 @@ QString CampusCard::cardDistributed(int serialNumber)
 
     //分配
     this->cardNumber.append(newCardNumber);//添加到卡号的list中
-    this->balance = 0;//新卡余额归零
 
     //更新发卡状态
     this->isDistributed=true;
@@ -76,6 +77,8 @@ bool CampusCard::cardReportLoss()
 {
     //挂失
     this->cardState = false;
+
+    return true;
 }
 
 //解挂
@@ -97,7 +100,7 @@ bool CampusCard::cardReissue(int serialNumber)
     if(this->isDistributed==true&&this->cardState==false)
     {
         //计算卡号的校验码X
-        int temp = 0;
+        int temp = 3;
         int tempSerialNumber = serialNumber;//临时储存流水号
         for(int j=0;j<5;j++){
             temp += serialNumber%10;
@@ -122,21 +125,16 @@ bool CampusCard::cardReissue(int serialNumber)
 }
 
 //校园卡充值
-bool CampusCard::cardRecharge(qreal money)
+bool CampusCard::cardRecharge(double money)
 {
     //充值，账户余额上限为999.99元
-
-    if(this->cardState==true)
-    {
-        //可以充值
-        if(this->balance+money<=999.99)
+    //可以充值
+        if(this->balance+money<1000)
         {
-            this->balance += money;
+            this->balance = this->balance + money;
 
             return true;//充值成功
         }
-    }
-
     return false;
 }
 

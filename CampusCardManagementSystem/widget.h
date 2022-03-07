@@ -7,15 +7,22 @@
 #include <QMessageBox>
 #include <QDateTime>
 #include <QTableView>
+#include <QCryptographicHash>
 #include <QStandardItemModel>
 #include <QItemSelectionModel>
+#include <QTextCodec>
+#include <QCryptographicHash>
+#include <QQueue>
+
 
 #include "campuscard.h"
 #include "campuscardmanagement.h"
 #include "canteenwindow.h"
 #include "canteenmanagement.h"
 #include "operationlog.h"
+#include "stringheap.h"
 
+#include "dialogopenaccount.h"
 #include "dialogrecharge.h"
 #include "dialogconsumption.h"
 #include "dialogsetdatetime.h"
@@ -23,7 +30,7 @@
 #include "mytoolbutton.h"
 
 #define FixedColumnNumber 4
-
+#define SIZE 8120
 namespace Ui {
 class Widget;
 }
@@ -36,6 +43,7 @@ public:
     explicit Widget(QWidget *parent = 0);
     void setToolButtonStyle();
     ~Widget();
+    //成员属性 0 : 找朋友打分数组
 
     //成员属性 1 : 全局时间
         QDateTime *globalDateTime;//全局时间
@@ -74,6 +82,9 @@ public:
     //成员属性 7 : 批量操作标志
         //防止先出发后面的时间点
         int sequenceNumber;
+
+    //成员属性 8 : 批量流水号数组
+        int serialNumArr[58];
 
     //TableView 样式
 
@@ -134,7 +145,41 @@ public:
         bool openFileCard(QDateTime begin,QDateTime end);
 
         //批量处理消费数据
-        bool openFileConsumption(QDateTime begin,QDateTime end);
+        bool openFileConsumption(QString begin,QString end);
+
+        //批量消费
+        bool batchConsumption(QString begin,QString end);
+
+    //k路归并
+    void K_SortOfCanteenLog(int k);
+
+    //快速排序
+    void FastSortCanteenLog();
+
+    //md5文件校验码
+    QString getFileMD5(QString fileName);
+
+    //生成消费单个校验码
+    QString generateCheckSum(QString key);
+
+    //单个校验码
+    QByteArray hmacSha1(QByteArray key, QByteArray baseString);
+
+    //找朋友
+    void FindFriend(QString stuNumber);
+
+    //字典
+    QMap<int,int> scoreArr[SIZE];//scoreArr[i]是一个Qmap,key->friend index,value->scores
+
+    //队列
+    QQueue<QString> qq;
+
+
+    //得分函数
+    int Score(int distance, int winId_1, int winId_2);
+
+    //转化
+    long long HOTP(QByteArray array);
 
 signals:
     //发送余额信息
@@ -184,9 +229,6 @@ private slots:
     //充值按钮槽函数
     void on_btn_recharge_clicked();
 
-    //查询框槽函数
-    void stu_search();
-
     //设置时间交互页面槽函数
     void on_btn_setDateTime_clicked();
 
@@ -199,7 +241,38 @@ private slots:
     //设置消费按钮槽函数
     void on_btn_consumption_clicked();
 
+
+    void on_btn_batch_op_clicked();
+
+    void on_tbtn_batch_process_clicked();
+
     void on_btn_card_rec1_clicked();
+
+    void on_ldt_search_textChanged(const QString &arg1);
+
+    void on_btn_con1_clicked();
+
+    void on_btn_rec2_clicked();
+
+    void on_btn_con2_clicked();
+
+    void on_btn_rec3_clicked();
+
+    void on_btn_con3_clicked();
+
+    void on_btn_rec4_clicked();
+
+    void on_btn_con4_clicked();
+
+    void on_btn_rec5_clicked();
+
+    void on_btn_con5_clicked();
+
+    void on_tbtn_open_clicked();
+
+    void on_lineEdit_textChanged(const QString &arg1);
+
+    void on_pushButton_clicked();
 
 private:
     //初始化 Model
@@ -232,6 +305,9 @@ private:
 
     //更新时间
     void updateDateTimeOnLabel();
+
+    //开户对话框(自定义)
+    DialogOpenAccount *dlg_open = NULL;
 
     //充值对话框(自定义)
     DialogRecharge *dlg_recharge = NULL;

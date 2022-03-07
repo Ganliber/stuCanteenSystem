@@ -8,10 +8,11 @@
 #include <QList>
 #include <QDate>
 #include <QTime>
+#include <QDebug>
 
 #include "operationlog.h"
 
-# define MaxConsumeRecordsNumber 6e4  //最多6w条消息记录
+# define MaxConsumeRecordsNumber 3000  //最多6w条消息记录
 
 class CanteenWindow
 {
@@ -21,7 +22,7 @@ public:
     CanteenWindow(QString wN,QString lN);
 
     //消费
-    void consume(bool res,QString cardNumber,QDateTime conDt,qreal balBefore,qreal amount);
+    void consume(bool res,QString cardNumber,QDateTime conDt,double balBefore,double amount);
 
     //添加消费日志
     void addConsumptionLog(OperationLog *log);
@@ -33,7 +34,6 @@ public:
 
         QVector<OperationLog> tempLog;//当前日志(先用链表存储,如果超过60000条则)
                                     //QList存储原因(不错的API):removeFirst(),removeLast(),toVector()
-
 private:
 
     //消费性质

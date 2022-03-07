@@ -26,6 +26,9 @@ public:
 
         //添加新的食堂窗口
         void addNewCanteenWindow(QString wN, QString lN);
+
+        //添加新日志
+        void addNewCanteenLog(OperationLog *log);
 };
 
 #endif // CANTEENMANAGEMENT_H

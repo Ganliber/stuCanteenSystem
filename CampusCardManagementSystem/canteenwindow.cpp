@@ -25,13 +25,18 @@ void CanteenWindow::addConsumptionLog(OperationLog *log)
     //循环保存
     if(tempLog.size()>MaxConsumeRecordsNumber)
     {
+        qDebug()<<this->winNumber<<"    "<<"超过3000条了捏";
+        auto it = &tempLog.at(0);
         tempLog.removeFirst();//去掉头部
+        //释放
+        delete(it);
+        it=NULL;
     }
 }
 
 //消费
 void CanteenWindow::consume(bool res,QString cardNumber,QDateTime conDt,
-                            qreal balBefore,qreal amount)
+                            double balBefore,double amount)
 {
     if(res==true)
     {
@@ -52,8 +57,6 @@ void CanteenWindow::consume(bool res,QString cardNumber,QDateTime conDt,
         this->addConsumptionLog(log);
     }
 }
-
-
 
 
 

@@ -25,13 +25,13 @@ public:
 
     void updateBalance();//更新下方标签
 
-    qreal acc;//当前累计消费金额
+    double acc;//当前累计消费金额
 
 signals:
 
     //与主窗口交互的公共信号:closeResult为此次消费是否有效,res为此次消费是否成功,均有默认参数
     void dlgSetConsumeInfo(bool closeResult=false,QString cardNumber=NULL,
-                           QDateTime t=QDateTime::currentDateTime(),qreal amount=0,
+                           QDateTime t=QDateTime::currentDateTime(),double amount=0,
                            bool res=false);//amount是单次消费金额
 
     //查询余额
@@ -40,7 +40,7 @@ signals:
 public slots:
 
     //接收余额槽函数
-    void getAccount(qreal balance);
+    void getAccount(double balance);
 
 private slots:
     void on_pushButton_clicked();
@@ -60,7 +60,7 @@ private:
     bool isTimeEfficient;
 
     //当前查询所得余额
-    qreal curBalance;
+    double curBalance;
 
     //当前查询卡号
     QString curCardNumber;

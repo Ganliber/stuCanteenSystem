@@ -53,7 +53,7 @@ public:
         bool reissueCard(QString stuNumber);
 
         //充值，账户余额上限为999.99元
-        bool rechargeCard(QString stuNumber,qreal money);
+        bool rechargeCard(QString stuNumber,double money);
 };
 
 #endif // CAMPUSCARDMANAGEMENT_H

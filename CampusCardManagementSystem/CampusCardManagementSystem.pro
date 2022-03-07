@@ -37,7 +37,9 @@ SOURCES += \
     canteenwindow.cpp \
     canteenmanagement.cpp \
     operationlog.cpp \
-    dialogconsumption.cpp
+    dialogconsumption.cpp \
+    dialogopenaccount.cpp \
+    stringheap.cpp
 
 HEADERS += \
         widget.h \
@@ -52,13 +54,18 @@ HEADERS += \
     canteenwindow.h \
     canteenmanagement.h \
     operationlog.h \
-    dialogconsumption.h
+    dialogconsumption.h \
+    dialogopenaccount.h \
+    stringheap.h
 
 FORMS += \
         widget.ui \
     dialogrecharge.ui \
     dialogsetdatetime.ui \
-    dialogconsumption.ui
+    dialogconsumption.ui \
+    dialogopenaccount.ui
 
 RESOURCES += \
     res.qrc
+
+QMAKE_LFLAGS_WINDOWS += -Wl,--stack,32000000

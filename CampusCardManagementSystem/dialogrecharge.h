@@ -12,13 +12,13 @@ class DialogRecharge : public QDialog
     Q_OBJECT
 
 public:
-    explicit DialogRecharge(QWidget *parent = 0,qreal balance = 0);
+    explicit DialogRecharge(QWidget *parent = 0,double balance = 0);
     ~DialogRecharge();
 
     void closeEvent(QCloseEvent *event);//重写关闭窗口事件
 
 signals:
-    void updateTempBalance(qreal balance);
+    void updateTempBalance(double balance);
 
 private slots:
     void on_btn_yes_clicked();
@@ -28,7 +28,7 @@ private slots:
 private:
     Ui::DialogRecharge *ui;
 
-    qreal tempBalance;
+    double tempBalance;
 };
 
 #endif // DIALOGRECHARGE_H

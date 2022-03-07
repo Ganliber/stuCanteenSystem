@@ -1,3 +1,6 @@
+
+
+
 #ifndef OPERATIONLOG_H
 #define OPERATIONLOG_H
 
@@ -10,9 +13,9 @@ public:
     OperationLog();
 
     OperationLog(int cIndex, int nLocation, bool opRes, QDateTime opDateTime, QString sName,
-        QString sNumber, QString cNumber,QString wNumber,qreal bB, qreal bC, int opT, int opE);
+        QString sNumber, QString cNumber,QString wNumber,double bB, double bC, int opT, int opE);
 
-    bool operator <(const OperationLog &log);//重载运算符 <
+    bool operator <(const OperationLog &log) const;//重载运算符 <
 
 
     //标志变量
@@ -74,9 +77,9 @@ public:
          *      操作命令，有多少项数据，成功项数，异常项数 ---> 4列
          *************************************************/
 
-        qreal balanceBefore;//余额
+        double balanceBefore;//余额
 
-        qreal balanceChange;//余额变化量, balanceChange=bB+bC
+        double balanceChange;//余额变化量, balanceChange=bB+bC
 
         int opTotalNumber;//总个数
 

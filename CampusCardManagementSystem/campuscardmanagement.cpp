@@ -22,6 +22,7 @@ bool CampusCardManagement::addNewAccount(const QString stuNumber,const QString s
 
     //开户(为根据学号进行排列)
     CampusCard *newOne = new CampusCard(stuNumber,stuName,effDate);
+
     this->campusCardList.push_back(*newOne);//参数是引用类型
 
     //构造当前映射(后期操作会造成改动,此处是为了避免未发卡就销户的bug),所有操作都要更新映射关系!
@@ -65,13 +66,10 @@ void CampusCardManagement::batch_distributeCard()
     //对当前未发卡的账户进行发卡
 
     //当前未发卡批次关于校园卡号从小到大顺序排序
-    std::sort(this->campusCardList.begin(),this->campusCardList.end());
+    //std::sort(this->campusCardList.begin(),this->campusCardList.end());
 
     //发卡
     for(int i=0;i<this->campusCardList.size();i++){
-
-        //更新映射关系
-        this->mapStuNumberToCardNumber[campusCardList[i].studentNumber]=i;
 
         if(this->campusCardList[i].isDistributed==false)
         {
@@ -94,30 +92,22 @@ void CampusCardManagement::batch_distributeCard()
 bool CampusCardManagement::reissueCard(QString stuNumber){
     //补卡
     int index = this->queryCampusCard(stuNumber);
+
     if(index!=-1)
     {
         int serialNumber = this->stuIssuedNumber + 12346;//流水号
 
-        bool flag = this->campusCardList[index].cardReissue(serialNumber);//补卡
+        //更新已经发卡
+        this->stuIssuedNumber += 1;
+
+        //补卡
+        bool flag = this->campusCardList[index].cardReissue(serialNumber);
+
 
         if(this->campusCardList[index].cardNumber.isEmpty())
             return false;//判断非空
 
         if(flag==true){
-//            //计算卡号的校验码X
-
-//            int temp = 0;
-//            int tempSerialNumber = serialNumber;//临时储存流水号
-//            for(int j=0;j<5;j++){
-//                temp += serialNumber%10;
-//                serialNumber /= 10;
-//            }
-//            int X = 9 - temp%10;//校验码
-//            serialNumber = tempSerialNumber*10+X;
-
-//            //数字转字符串
-//            QString cardNumberNew = QString("3")+QString::number(serialNumber);
-
             CampusCard &tmp = this->campusCardList[index];
 
             //新卡号
@@ -128,15 +118,16 @@ bool CampusCardManagement::reissueCard(QString stuNumber){
 
             //修改之前映射
             this->mapCanteenNumberToCardNumber[cardNumberBefore].second = false;
+
+            //新映射
             this->mapCanteenNumberToCardNumber[cardNumberNew]=QPair<int,bool>(index,true);
         }
     }
-
     return false;
 }
 
 //充值
-bool CampusCardManagement::rechargeCard(QString stuNumber,qreal money){
+bool CampusCardManagement::rechargeCard(QString stuNumber,double money){
     //充值，账户余额上限为999.99元
     int index = this->queryCampusCard(stuNumber);
 

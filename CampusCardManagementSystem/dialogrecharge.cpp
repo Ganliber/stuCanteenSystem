@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QCloseEvent>
 
-DialogRecharge::DialogRecharge(QWidget *parent,qreal balance) :
+DialogRecharge::DialogRecharge(QWidget *parent,double balance) :
     QDialog(parent),
     ui(new Ui::DialogRecharge)
 {
@@ -30,7 +30,7 @@ DialogRecharge::~DialogRecharge()
 
 void DialogRecharge::on_btn_yes_clicked()
 {
-    qreal money = ui->dsb_recharge->value();//获取框内所显示值
+    double money = ui->dsb_recharge->value();//获取框内所显示值
     if(money<0)
     {
         QMessageBox::warning(this,QString("警告"),QString("充值金额不可为负!"),

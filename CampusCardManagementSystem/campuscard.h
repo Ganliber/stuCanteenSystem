@@ -23,7 +23,7 @@ public:
 
     bool cardReissue(int serialNumber);//补卡
 
-    bool cardRecharge(qreal money);//充值，账户余额上限为999.99元
+    bool cardRecharge(double money);//充值，账户余额上限为999.99元
 
     /****************************************************
      * 成员属性:学号                                     *
@@ -60,7 +60,7 @@ public:
 
     bool cardState;//当前卡片状态：false(禁用),true(正常状态)
 
-    qreal balance;//余额,qreal等价于double
+    double balance;//余额,double等价于double
 
 };
 
