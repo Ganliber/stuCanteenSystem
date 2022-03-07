@@ -38,19 +38,19 @@
 
 * Campus Card Manage
 
-  <img src="C:\Users\XiZhongKuiYue\AppData\Roaming\Typora\typora-user-images\image-20220308012117586.png" alt="image-20220308012117586" style="zoom:33%;" />
+  ![image](https://github.com/Xzky-web/Campus-Card---Canteen-Management-System/blob/main/image/eff1.png)
 
 * Canteen Manage
 
-  <img src="C:\Users\XiZhongKuiYue\AppData\Roaming\Typora\typora-user-images\image-20220308012302413.png" alt="image-20220308012302413" style="zoom:33%;" />
+  ![image](https://github.com/Xzky-web/Campus-Card---Canteen-Management-System/blob/main/image/eff2.png)
 
 * Log Manage
 
-  <img src="C:\Users\XiZhongKuiYue\AppData\Roaming\Typora\typora-user-images\image-20220308012357732.png" alt="image-20220308012357732" style="zoom:33%;" />
+  ![image](https://github.com/Xzky-web/Campus-Card---Canteen-Management-System/blob/main/image/eff3.png)
 
 * Batch Manage
 
-  ![image-20220308012423884](C:\Users\XiZhongKuiYue\AppData\Roaming\Typora\typora-user-images\image-20220308012423884.png)
+  ![image](https://github.com/Xzky-web/Campus-Card---Canteen-Management-System/blob/main/image/eff4.png)
 
 
 
