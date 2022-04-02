@@ -18,11 +18,13 @@
 
 ### Running Instruction
 
-***
+##### pattern I : source code 
 
-* Please import project files in Qt 5.9, paying particular attention to the integrity of the `.pro` file.
+* Please import project files in `Qt 5.9`, paying particular attention to the integrity of the `.pro` file.
 
+##### pattern II : executable file
 
+* Download the `setup.exe` file to local and run it with the testing files placed in right path.
 
 ### Note
 
